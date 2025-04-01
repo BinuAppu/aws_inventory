@@ -1,4 +1,11 @@
 import boto3
+import csv
+import os
+
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+clear_screen()
 
 accesskey = 'INPUTYOURACCESSKEYHERE'
 secretkey = 'INPUTYOURSECRETKEYHERETOACCESSAWSENVIRONMENT'
@@ -10,7 +17,6 @@ This script collects Inventory for AWS
 Script by Binu Balan
 
 """
-
 print(logo)
 
 class bcolors:
@@ -37,30 +43,40 @@ else:
     connect = boto3.client("ec2",region_name='us-east-1')
 
 
-# ==========================================
-#print ("[+] Working on listing VPCs")
-# connect = session.client("ec2",region_name='us-east-1')
-#fetechvpcs = connect.describe_vpcs()
-
-#for vpc in fetechvpcs["Vpcs"]:
-    # print(vpc["CidrBlock"])
-    #print(vpc)
-#print (" ")
-
-
 #print(bcolors.OKGREEN + f"[+] List all regions for the Environment" + bcolors.ENDC)
 print ("[+] Working on Route VPC's")
+head="OwnerId,AssociationId,CidrBlock,InstanceTenancy,IsDefault,BlockPublicAccessStates,VpcId,State,CidrBlock,DhcpOptionsId \n"
+with open("vpc_report.csv",'w') as headfile:
+        headfile.write(str(head))
+        headfile.close()
 regions = connect.describe_regions()
+combineval = []
 for region in regions["Regions"]:
     regionName = region["RegionName"]
-    vpcregionwise = session.client("ec2",region_name=regionName)
-    fetchvpcfromregion = vpcregionwise.describe_vpcs()
-    print(bcolors.OKBLUE + f"[+] Printing VPCs for Region {regionName}" + bcolors.ENDC)
-    for vpcinregion in fetchvpcfromregion["Vpcs"]:
-        print(vpcinregion)
+    try:
+        vpcregionwise = session.client("ec2",region_name=regionName)
+        fetchvpcfromregion = vpcregionwise.describe_vpcs()
+        print(bcolors.OKBLUE + f"[+] Printing VPCs for Region {regionName}" + bcolors.ENDC)
+        for vpcinregion in fetchvpcfromregion["Vpcs"]:
+            print(vpcinregion['OwnerId'],",",vpcinregion['CidrBlockAssociationSet'],",",vpcinregion['InstanceTenancy'],",",vpcinregion['IsDefault'],",",vpcinregion['BlockPublicAccessStates'],",",vpcinregion['VpcId'],",",vpcinregion['State'],",",vpcinregion['CidrBlock'],",",vpcinregion['DhcpOptionsId'])
+            print(vpcinregion['BlockPublicAccessStates']['InternetGatewayBlockMode'])
+            writeCsv = str(vpcinregion['OwnerId'])+","+(vpcinregion['CidrBlockAssociationSet'][0]['AssociationId'])+","+(vpcinregion['CidrBlockAssociationSet'][0]['CidrBlock'])+","+str(vpcinregion['InstanceTenancy'])+","+str(vpcinregion['IsDefault'])+","+str(vpcinregion['BlockPublicAccessStates']['InternetGatewayBlockMode'])+","+str(vpcinregion['VpcId'])+","+str(vpcinregion['State'])+","+str(vpcinregion['CidrBlock'])+","+str(vpcinregion['DhcpOptionsId'])
+            
+            with open("vpc_report.csv",'a') as addfiles:
+                writeval = writeCsv
+                addfiles.write(writeval)
+                addfiles.write('\n')
+                addfiles.close()
+    except:
+        pass
+
 
 print ("[+] Working on Subnets")
 regions = connect.describe_regions()
+head = "AvailabilityZoneId,OwnerId,SubnetArn,SubnetId,State,VpcId,CidrBlock,AvailableIpAddressCount,AvailabilityZone \n"
+with open("subnets_report.csv",'w') as headfile:
+        headfile.write(str(head))
+        headfile.close()
 for region in regions["Regions"]:
     regionName = region["RegionName"]
     try:
@@ -68,14 +84,25 @@ for region in regions["Regions"]:
         regsubnets = vpcregionwisesub.describe_subnets()
         print(bcolors.OKGREEN + f"[+] Printing Subnets for Region {regionName}" + bcolors.ENDC)
         for subnets in regsubnets["Subnets"]:
-            print(subnets)
+            print(subnets['AvailabilityZoneId'] , "," , subnets['OwnerId'] , "," , subnets['SubnetArn'] , "," , subnets['SubnetId'] , "," , subnets['State'] , "," , subnets['VpcId'] , "," , subnets['CidrBlock'] , "," , subnets['AvailableIpAddressCount'] , "," , subnets['AvailabilityZone'])            
+            subnetval = str(subnets['AvailabilityZoneId']) + "," + str(subnets['OwnerId']) + "," + str(subnets['SubnetArn']) + "," + str(subnets['SubnetId']) + "," + str(subnets['State']) + "," + str(subnets['VpcId']) + "," + str(subnets['CidrBlock']) + "," + str(subnets['AvailableIpAddressCount']) + "," + str(subnets['AvailabilityZone'])
+            with open("subnets_report.csv",'a') as subnetsfile:
+                subnetsfile.write(subnetval)
+                subnetsfile.write('\n')
+                subnetsfile.close()
     except:
         pass
         # print(f"No Subnets found in Region : {regionName} or Access Denied !")
-        
+
 
 print ("[+] Working on Route Tables")
 print(bcolors.OKGREEN + f"[+] List all Route Tables for the Environment" + bcolors.ENDC)
+headfilesubnet = "Is Associations Main ,Associations - RouteTableAssociationId, Associations - RouteTableId,Associations - AssociationState - State,RouteTableId,Routes - DestinationCidrBlock,Routes - GatewayId,Routes - DestinationCidrBlock,Routes - GatewayId,Routes - State,VpcId,OwnerId"
+with open("routetables_report.csv",'w') as headfilesub:
+        headfilesub.write(str(headfilesubnet))
+        headfilesub.write('\n')
+        headfilesub.close()
+
 regions = connect.describe_regions()
 for region in regions["Regions"]:
     regionName = region["RegionName"]
@@ -84,7 +111,14 @@ for region in regions["Regions"]:
         getroutes = routetables.describe_route_tables()
         print(bcolors.OKGREEN + f"[+] Printing Route Tables for Region {regionName}" + bcolors.ENDC)
         for routes in getroutes["RouteTables"]:
-            print(routes)
+            print("=======================")
+            print(routes['Associations'][0]['Main'],routes['Associations'][0]['RouteTableAssociationId'],routes['Associations'][0]['RouteTableId'],routes['Associations'][0]['AssociationState']['State'],routes['RouteTableId'],routes['Routes'][0]['DestinationCidrBlock'],routes['Routes'][0]['GatewayId'],routes['Routes'][1]['DestinationCidrBlock'],routes['Routes'][1]['GatewayId'],routes['Routes'][1]['State'],routes['VpcId'],routes['OwnerId'])
+            routeval = str(routes['Associations'][0]['Main']) + "," + str(routes['Associations'][0]['RouteTableAssociationId']) + "," + str(routes['Associations'][0]['RouteTableId']) + "," + str(routes['Associations'][0]['AssociationState']['State']) + "," + str(routes['RouteTableId']) + "," + str(routes['Routes'][0]['DestinationCidrBlock']) + "," + str(routes['Routes'][0]['GatewayId']) + "," + str(routes['Routes'][1]['DestinationCidrBlock']) + "," + str(routes['Routes'][1]['GatewayId']) + "," + str(routes['Routes'][1]['State']) + "," + str(routes['VpcId']) + "," + str(routes['OwnerId'])
+            with open("routetables_report.csv",'a') as writerouteval:
+                print(routeval)
+                writerouteval.write(routeval)
+                writerouteval.write('\n')
+                writerouteval.close()
     except:
         pass
         # print(f"No Route Tables found in Region : {regionName} or Access Denied !")

@@ -97,7 +97,7 @@ for region in regions["Regions"]:
 
 print ("[+] Working on Route Tables")
 print(bcolors.OKGREEN + f"[+] List all Route Tables for the Environment" + bcolors.ENDC)
-headfilesubnet = "Is Associations Main ,Associations - RouteTableAssociationId, Associations - RouteTableId,Associations - AssociationState - State,RouteTableId,Routes - DestinationCidrBlock,Routes - GatewayId,Routes - DestinationCidrBlock,Routes - GatewayId,Routes - State,VpcId,OwnerId"
+headfilesubnet = "RegionName, Is Associations Main ,Associations - RouteTableAssociationId, Associations - RouteTableId,Associations - AssociationState - State,RouteTableId,Routes - DestinationCidrBlock,Routes - GatewayId,Routes - DestinationCidrBlock,Routes - GatewayId,Routes - State,VpcId,OwnerId"
 with open("routetables_report.csv",'w') as headfilesub:
         headfilesub.write(str(headfilesubnet))
         headfilesub.write('\n')
@@ -113,7 +113,7 @@ for region in regions["Regions"]:
         for routes in getroutes["RouteTables"]:
             print("=======================")
             print(routes['Associations'][0]['Main'],routes['Associations'][0]['RouteTableAssociationId'],routes['Associations'][0]['RouteTableId'],routes['Associations'][0]['AssociationState']['State'],routes['RouteTableId'],routes['Routes'][0]['DestinationCidrBlock'],routes['Routes'][0]['GatewayId'],routes['Routes'][1]['DestinationCidrBlock'],routes['Routes'][1]['GatewayId'],routes['Routes'][1]['State'],routes['VpcId'],routes['OwnerId'])
-            routeval = str(routes['Associations'][0]['Main']) + "," + str(routes['Associations'][0]['RouteTableAssociationId']) + "," + str(routes['Associations'][0]['RouteTableId']) + "," + str(routes['Associations'][0]['AssociationState']['State']) + "," + str(routes['RouteTableId']) + "," + str(routes['Routes'][0]['DestinationCidrBlock']) + "," + str(routes['Routes'][0]['GatewayId']) + "," + str(routes['Routes'][1]['DestinationCidrBlock']) + "," + str(routes['Routes'][1]['GatewayId']) + "," + str(routes['Routes'][1]['State']) + "," + str(routes['VpcId']) + "," + str(routes['OwnerId'])
+            routeval = str(regionName) + "," + str(routes['Associations'][0]['Main']) + "," + str(routes['Associations'][0]['RouteTableAssociationId']) + "," + str(routes['Associations'][0]['RouteTableId']) + "," + str(routes['Associations'][0]['AssociationState']['State']) + "," + str(routes['RouteTableId']) + "," + str(routes['Routes'][0]['DestinationCidrBlock']) + "," + str(routes['Routes'][0]['GatewayId']) + "," + str(routes['Routes'][1]['DestinationCidrBlock']) + "," + str(routes['Routes'][1]['GatewayId']) + "," + str(routes['Routes'][1]['State']) + "," + str(routes['VpcId']) + "," + str(routes['OwnerId'])
             with open("routetables_report.csv",'a') as writerouteval:
                 print(routeval)
                 writerouteval.write(routeval)

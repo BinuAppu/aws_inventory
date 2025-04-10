@@ -111,6 +111,11 @@ for region in regions["Regions"]:
         getroutes = routetables.describe_route_tables()
         print(bcolors.OKGREEN + f"[+] Printing Route Tables for Region {regionName}" + bcolors.ENDC)
         for routes in getroutes["RouteTables"]:
+                for route in routes["Routes"]:
+                    with open("routetables_report.csv","a") as f:
+                        w = csv.writer(f)
+                        w.writerow(route.items())
+            '''
             print("=======================")
             print(routes['Associations'][0]['Main'],routes['Associations'][0]['RouteTableAssociationId'],routes['Associations'][0]['RouteTableId'],routes['Associations'][0]['AssociationState']['State'],routes['RouteTableId'],routes['Routes'][0]['DestinationCidrBlock'],routes['Routes'][0]['GatewayId'],routes['Routes'][1]['DestinationCidrBlock'],routes['Routes'][1]['GatewayId'],routes['Routes'][1]['State'],routes['VpcId'],routes['OwnerId'])
             routeval = str(regionName) + "," + str(routes['Associations'][0]['Main']) + "," + str(routes['Associations'][0]['RouteTableAssociationId']) + "," + str(routes['Associations'][0]['RouteTableId']) + "," + str(routes['Associations'][0]['AssociationState']['State']) + "," + str(routes['RouteTableId']) + "," + str(routes['Routes'][0]['DestinationCidrBlock']) + "," + str(routes['Routes'][0]['GatewayId']) + "," + str(routes['Routes'][1]['DestinationCidrBlock']) + "," + str(routes['Routes'][1]['GatewayId']) + "," + str(routes['Routes'][1]['State']) + "," + str(routes['VpcId']) + "," + str(routes['OwnerId'])
@@ -119,6 +124,7 @@ for region in regions["Regions"]:
                 writerouteval.write(routeval)
                 writerouteval.write('\n')
                 writerouteval.close()
+            '''
     except:
         pass
         # print(f"No Route Tables found in Region : {regionName} or Access Denied !")

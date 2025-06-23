@@ -1,6 +1,6 @@
 import boto3
-import csv
 import os
+import pandas as pd
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -44,10 +44,6 @@ else:
 
 #print(bcolors.OKGREEN + f"[+] List all regions for the Environment" + bcolors.ENDC)
 print ("[+] Working on Route VPC's")
-head="OwnerId,AssociationId,CidrBlock,InstanceTenancy,IsDefault,BlockPublicAccessStates,VpcId,State,CidrBlock,DhcpOptionsId \n"
-with open("vpc_report.csv",'w') as headfile:
-        headfile.write(str(head))
-        headfile.close()
 regions = connect.describe_regions()
 combineval = []
 for region in regions["Regions"]:
@@ -57,23 +53,13 @@ for region in regions["Regions"]:
         fetchvpcfromregion = vpcregionwise.describe_vpcs()
         print(bcolors.OKBLUE + f"[+] Printing VPCs for Region {regionName}" + bcolors.ENDC)
         for vpcinregion in fetchvpcfromregion["Vpcs"]:
-            print(vpcinregion['OwnerId'],",",vpcinregion['CidrBlockAssociationSet'],",",vpcinregion['InstanceTenancy'],",",vpcinregion['IsDefault'],",",vpcinregion['BlockPublicAccessStates'],",",vpcinregion['VpcId'],",",vpcinregion['State'],",",vpcinregion['CidrBlock'],",",vpcinregion['DhcpOptionsId'])
-            print(vpcinregion['BlockPublicAccessStates']['InternetGatewayBlockMode'])
-            writeCsv = str(vpcinregion['OwnerId'])+","+(vpcinregion['CidrBlockAssociationSet'][0]['AssociationId'])+","+(vpcinregion['CidrBlockAssociationSet'][0]['CidrBlock'])+","+str(vpcinregion['InstanceTenancy'])+","+str(vpcinregion['IsDefault'])+","+str(vpcinregion['BlockPublicAccessStates']['InternetGatewayBlockMode'])+","+str(vpcinregion['VpcId'])+","+str(vpcinregion['State'])+","+str(vpcinregion['CidrBlock'])+","+str(vpcinregion['DhcpOptionsId'])
-            with open("vpc_report.csv",'a') as addfiles:
-                writeval = writeCsv
-                addfiles.write(writeval)
-                addfiles.write('\n')
-                addfiles.close()
+            # pandas dict to csv
+            pd.DataFrame([vpcinregion]).to_csv("vpc_report_panda.csv", mode='a', header=True, index=False)
     except:
         pass
 
 print ("[+] Working on Subnets")
 regions = connect.describe_regions()
-head = "AvailabilityZoneId,OwnerId,SubnetArn,SubnetId,State,VpcId,CidrBlock,AvailableIpAddressCount,AvailabilityZone \n"
-with open("subnets_report.csv",'w') as headfile:
-        headfile.write(str(head))
-        headfile.close()
 for region in regions["Regions"]:
     regionName = region["RegionName"]
     try:
@@ -81,15 +67,10 @@ for region in regions["Regions"]:
         regsubnets = vpcregionwisesub.describe_subnets()
         print(bcolors.OKGREEN + f"[+] Printing Subnets for Region {regionName}" + bcolors.ENDC)
         for subnets in regsubnets["Subnets"]:
-            print(subnets['AvailabilityZoneId'] , "," , subnets['OwnerId'] , "," , subnets['SubnetArn'] , "," , subnets['SubnetId'] , "," , subnets['State'] , "," , subnets['VpcId'] , "," , subnets['CidrBlock'] , "," , subnets['AvailableIpAddressCount'] , "," , subnets['AvailabilityZone'])            
-            subnetval = str(subnets['AvailabilityZoneId']) + "," + str(subnets['OwnerId']) + "," + str(subnets['SubnetArn']) + "," + str(subnets['SubnetId']) + "," + str(subnets['State']) + "," + str(subnets['VpcId']) + "," + str(subnets['CidrBlock']) + "," + str(subnets['AvailableIpAddressCount']) + "," + str(subnets['AvailabilityZone'])
-            with open("subnets_report.csv",'a') as subnetsfile:
-                subnetsfile.write(subnetval)
-                subnetsfile.write('\n')
-                subnetsfile.close()
+            pd.DataFrame([subnets]).to_csv("subnets_report_panda.csv", mode='a', header=True, index=False)
     except:
         pass
-        # print(f"No Subnets found in Region : {regionName} or Access Denied !")
+        
 
 print ("[+] Working on Route Tables")
 print(bcolors.OKGREEN + f"[+] List all Route Tables for the Environment" + bcolors.ENDC)
@@ -103,39 +84,24 @@ for region in regions["Regions"]:
         for routes in getroutes["RouteTables"]:
                 for route in routes["Routes"]:
                     print(route)
-                    with open("routetables_report.csv","a") as f:
-                        w = csv.writer(f)
-                        w.writerow(route.items())
-            #print("=======================")
-            #print(routes['Associations'][0]['Main'],routes['Associations'][0]['RouteTableAssociationId'],routes['Associations'][0]['RouteTableId'],routes['Associations'][0]['AssociationState']['State'],routes['RouteTableId'],routes['Routes'][0]['DestinationCidrBlock'],routes['Routes'][0]['GatewayId'],routes['Routes'][1]['DestinationCidrBlock'],routes['Routes'][1]['GatewayId'],routes['Routes'][1]['State'],routes['VpcId'],routes['OwnerId'])
-            #routeval = str(regionName) + "," + str(routes['Associations'][0]['Main']) + "," + str(routes['Associations'][0]['RouteTableAssociationId']) + "," + str(routes['Associations'][0]['RouteTableId']) + "," + str(routes['Associations'][0]['AssociationState']['State']) + "," + str(routes['RouteTableId']) + "," + str(routes['Routes'][0]['DestinationCidrBlock']) + "," + str(routes['Routes'][0]['GatewayId']) + "," + str(routes['Routes'][1]['DestinationCidrBlock']) + "," + str(routes['Routes'][1]['GatewayId']) + "," + str(routes['Routes'][1]['State']) + "," + str(routes['VpcId']) + "," + str(routes['OwnerId'])
-            #with open("routetables_report.csv",'a') as writerouteval:
-            #    print(routeval)
-            #    writerouteval.write(routeval)
-            #    writerouteval.write('\n')
-            #    writerouteval.close()
+                    pd.DataFrame([route]).to_csv("route_report_panda.csv", mode='a', header=True, index=False)
     except:
         pass
-        # print(f"No Route Tables found in Region : {regionName} or Access Denied !")
+        
 
 print ("[+] Working on listing S3 Buckets")
 #for region in regions["Regions"]:
 buckets3 = ""
 bucket = ""
-#regionName = region["RegionName"]
-#    try:
+
 connect = session.client("s3")
 buckets3 = connect.list_buckets()
 print(bcolors.OKGREEN + f"[+] Printing Storage for Region {regionName}" + bcolors.ENDC)
 for bucket in buckets3["Buckets"]:
     eachbucket = bucket
     print(eachbucket)
-    with open("storage_report.csv","a") as f:
-        w = csv.writer(f)
-        w.writerow(eachbucket.items())
-#except:
-#pass
-# print(f"No Storage found in Region : {regionName} or Access Denied !")
+    pd.DataFrame([eachbucket]).to_csv("storage_report_panda.csv", mode='a', header=True, index=False)
+
 
 print ("[+] Working on Public IPs")
 for region in regions["Regions"]:
@@ -146,9 +112,72 @@ for region in regions["Regions"]:
         print(bcolors.OKGREEN + f"[+] Printing Public IPs for Region {regionName}" + bcolors.ENDC)
         for pubips in allpubips["Addresses"]:
             print(pubips)
-            with open("publicipaddress_report.csv","a") as f:
-                w = csv.writer(f)
-                w.writerow(pubips.items())
+            pd.DataFrame([pubips]).to_csv("public_ip_report_panda.csv", mode='a', header=True, index=False)
     except:
         pass
  
+
+# export Ec2 Instances
+print ("[+] Working on EC2 Instances")
+for region in regions["Regions"]:
+    regionName = region["RegionName"]
+    try:
+        ec2region = session.client("ec2",region_name=regionName)
+        allinstances = ec2region.describe_instances()
+        print(bcolors.OKGREEN + f"[+] Printing EC2 Instances for Region {regionName}" + bcolors.ENDC)
+        for reservation in allinstances["Reservations"]:
+            for instance in reservation["Instances"]:
+                print("Working on Instance: ", instance.get("InstanceId"))
+                pd.DataFrame([instance]).to_csv("ec2_report_panda.csv", mode='a', header=True, index=False)
+    except:
+        pass
+
+
+# Export volume details
+print ("[+] Working on EC2 Volumes")
+for region in regions["Regions"]:
+    regionName = region["RegionName"]
+    try:
+        ec2regionvol = session.client("ec2",region_name=regionName)
+        allvolumes = ec2regionvol.describe_volumes()
+        print(bcolors.OKGREEN + f"[+] Printing EC2 Volumes for Region {regionName}" + bcolors.ENDC)
+        for volume in allvolumes["Volumes"]:
+            print(volume)
+            pd.DataFrame([volume]).to_csv("ec2_volume_report_panda.csv", mode='a', header=True, index=False)
+    except:
+        pass
+
+# Export following to Text File - EBS Encryption by Default, AMI Block Public Access, EBS Snapshot Block Public Access, IMDS defaults
+print ("[+] Working on EBS Encryption by Default")
+secconfig = session.client("ec2")
+ebsdefault = secconfig.get_ebs_encryption_by_default()
+print(bcolors.OKGREEN + f"[+] EBS Encryption by Default: {ebsdefault}" + bcolors.ENDC)
+with open("ebs_configs.txt", "a") as file:
+    file.write(str("EBS Encryption by Default:"))
+    file.write(str(ebsdefault))
+    file.write(str("\n"))
+    file.close()
+print ("[+] Working on AMI Block Public Access")
+amiblock = secconfig.get_image_block_public_access_state()
+print(bcolors.OKGREEN + f"[+] AMI Block Public Access: {amiblock}" + bcolors.ENDC)
+with open("ebs_configs.txt", "a") as file:
+    file.write(str("AMI Block Public Access:"))
+    file.write(str(amiblock))
+    file.write(str("\n"))
+    file.close()
+print ("[+] Working on EBS Snapshot Block Public Access")
+ebssnapshotblock = secconfig.get_image_block_public_access_state()
+print(bcolors.OKGREEN + f"[+] EBS Snapshot Block Public Access: {ebssnapshotblock}" + bcolors.ENDC)
+with open("ebs_configs.txt", "a") as file:
+    file.write(str("EBS Snapshot Block Public Access:"))
+    file.write(str(ebssnapshotblock))
+    file.write(str("\n"))
+    file.close()
+print ("[+] Working on IMDS defaults")
+imdsdefaults = secconfig.get_instance_metadata_defaults()
+print(bcolors.OKGREEN + f"[+] IMDS Defaults: {imdsdefaults}" + bcolors.ENDC)
+with open("ebs_configs.txt", "a") as file:
+    file.write(str("IMDS Defaults:"))
+    file.write(str(imdsdefaults))
+    file.write(str("\n"))
+    file.close()
